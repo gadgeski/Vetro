@@ -3,10 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
-
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+
+    <!-- 【追加】 正確なアラーム（タイマー）を使うための権限 -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:allowBackup="true"
@@ -29,15 +31,13 @@
             </intent-filter>
         </activity>
 
-        <!-- ================================================================= -->
-        <!-- 【追加】 ウィジェット (Glance) の受信レシーバー -->
-        <!-- ================================================================= -->
-        <!-- これを追加することで、システムが「Vetro」ウィジェットを認識できるようになります -->
         <receiver
             android:name=".widget.VetroWidgetReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <!-- 【追加】 自作の更新アクションを受け取れるようにする -->
+                <action android:name="com.example.vetro.ACTION_UPDATE_TICK" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

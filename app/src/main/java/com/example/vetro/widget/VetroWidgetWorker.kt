@@ -1,4 +1,4 @@
-// VetroWidgetWorker.kt
+// VetroWidgetWorker.kt → 廃止(更新システム入れ替え)
 package com.example.vetro.widget
 
 import android.content.Context
