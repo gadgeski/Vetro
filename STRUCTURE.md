@@ -9,7 +9,7 @@ Vetro/
 │       ├── androidTest
 │       │   └── java
 │       │       └── com
-│       │           └── example
+│       │           └── gadgeski
 │       │               └── vetro
 │       │                   └── ExampleInstrumentedTest.kt
 │       ├── main
@@ -17,7 +17,7 @@ Vetro/
 │       │   ├── ic_launcher-playstore.png
 │       │   ├── java
 │       │   │   └── com
-│       │   │       └── example
+│       │   │       └── gadgeski
 │       │   │           └── vetro
 │       │   │               ├── MainActivity.kt
 │       │   │               ├── data
@@ -87,7 +87,7 @@ Vetro/
 │       └── test
 │           └── java
 │               └── com
-│                   └── example
+│                   └── gadgeski
 │                       └── vetro
 │                           └── ExampleUnitTest.kt
 ├── build.gradle.kts
