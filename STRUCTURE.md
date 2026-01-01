@@ -3,6 +3,17 @@ Vetro/
 ├── Readme.md
 ├── STRUCTURE.md
 ├── app
+│   ├── archive_src
+│   │   └── widget_prototype
+│   │       ├── util
+│   │       │   └── WallpaperUtil.kt
+│   │       ├── vetro_widget_info.xml
+│   │       └── widget
+│   │           ├── ChangeWallpaperAction.kt
+│   │           ├── VetroWidget.kt
+│   │           ├── VetroWidgetReceiver.kt
+│   │           ├── VetroWidgetRenderer.kt
+│   │           └── VetroWidgetWorker.kt
 │   ├── build.gradle.kts
 │   ├── proguard-rules.pro
 │   └── src
@@ -20,30 +31,14 @@ Vetro/
 │       │   │       └── gadgeski
 │       │   │           └── vetro
 │       │   │               ├── MainActivity.kt
-│       │   │               ├── data
-│       │   │               │   └── WeatherRepository.kt
+│       │   │               ├── VetroApp.kt
 │       │   │               ├── service
 │       │   │               │   └── VetroDreamService.kt
-│       │   │               ├── ui
-│       │   │               │   ├── components
-│       │   │               │   │   ├── GlassText.kt
-│       │   │               │   │   └── WeatherDisplay.kt
-│       │   │               │   ├── screen
-│       │   │               │   │   └── ClockScreen.kt
-│       │   │               │   ├── theme
-│       │   │               │   │   ├── Color.kt
-│       │   │               │   │   ├── Theme.kt
-│       │   │               │   │   └── Type.kt
-│       │   │               │   ├── util
-│       │   │               │   │   └── WallpaperUtil.kt
-│       │   │               │   └── viewmodel
-│       │   │               │       └── ClockViewModel.kt
-│       │   │               └── widget
-│       │   │                   ├── ChangeWallpaperAction.kt
-│       │   │                   ├── VetroWidget.kt
-│       │   │                   ├── VetroWidgetReceiver.kt
-│       │   │                   ├── VetroWidgetRenderer.kt
-│       │   │                   └── VetroWidgetWorker.kt
+│       │   │               └── ui
+│       │   │                   └── theme
+│       │   │                       ├── Color.kt
+│       │   │                       ├── Theme.kt
+│       │   │                       └── Type.kt
 │       │   └── res
 │       │       ├── drawable
 │       │       │   ├── background_img.png
@@ -51,7 +46,7 @@ Vetro/
 │       │       │   ├── ic_launcher_background.xml
 │       │       │   └── ic_launcher_foreground.xml
 │       │       ├── font
-│       │       │   └── custom_thin_font.ttf
+│       │       │   └── bbh_bartle.ttf
 │       │       ├── mipmap-anydpi
 │       │       ├── mipmap-anydpi-v26
 │       │       │   ├── ic_launcher.xml
@@ -82,8 +77,7 @@ Vetro/
 │       │       │   └── themes.xml
 │       │       └── xml
 │       │           ├── backup_rules.xml
-│       │           ├── data_extraction_rules.xml
-│       │           └── vetro_widget_info.xml
+│       │           └── data_extraction_rules.xml
 │       └── test
 │           └── java
 │               └── com
@@ -102,5 +96,5 @@ Vetro/
 ├── local.properties
 └── settings.gradle.kts
 
-41 directories, 61 files
+39 directories, 57 files
 ```
