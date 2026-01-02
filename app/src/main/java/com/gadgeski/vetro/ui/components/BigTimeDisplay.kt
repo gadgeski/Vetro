@@ -9,7 +9,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -17,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.min
 
 /**
  * Vetroのメイン機能：特大時計表示コンポーネント
@@ -24,10 +24,10 @@ import java.time.format.DateTimeFormatter
  * - BBH Bartleフォントを使用
  * - 画面幅に合わせてフォントサイズを動的に最大化
  * - 時間を鮮やかな色に変更
- * - constraints.maxWidth を使用して計算を最適化
+ * - 【Update】非対称サイバーパンク型デザイン
+ *   時（Hour）を大きく、分（Minute）をやや控えめにして視覚的ヒエラルキーを構築
  */
 @Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
-// IDEの誤検知警告を抑制
 @Composable
 fun BigTimeDisplay(
     time: LocalTime,
@@ -36,60 +36,70 @@ fun BigTimeDisplay(
     val hourString = time.format(DateTimeFormatter.ofPattern("HH"))
     val minuteString = time.format(DateTimeFormatter.ofPattern("mm"))
 
-    // 警告回避のため LocalDensity は外で取得
     val density = LocalDensity.current
 
     BoxWithConstraints(modifier = modifier) {
-        // 【最適化】
-        // maxWidth(dp) を toPx() するのではなく、constraints.maxWidth(px) を直接使用します。
-        // これにより無駄な変換計算がなくなり、IDEの誤検知も回避しやすくなります。
         val constraintsWidth = constraints.maxWidth
+        val constraintsHeight = constraints.maxHeight
 
-        // フォントサイズ計算（メモ化）
-        val dynamicFontSize = remember(constraintsWidth, density) {
+        // 時（Hour）のフォントサイズ - やや大きめ
+        val hourFontSize = remember(constraintsWidth, constraintsHeight, density) {
             with(density) {
-                // constraintsWidth は Int(px) なのでそのまま計算に使用
-                (constraintsWidth * 0.65f).toSp()
+                val sizeByWidth = constraintsWidth * 0.42f
+                val sizeByHeight = constraintsHeight * 0.42f
+                min(sizeByWidth, sizeByHeight).toSp()
             }
         }
 
-        // 行間計算（メモ化）
-        val dynamicLineHeight = remember(dynamicFontSize) {
-            dynamicFontSize * 0.85f
+        // 分（Minute）のフォントサイズ - 時より小さめ
+        val minuteFontSize = remember(constraintsWidth, constraintsHeight, density) {
+            with(density) {
+                val sizeByWidth = constraintsWidth * 0.35f
+                val sizeByHeight = constraintsHeight * 0.35f
+                min(sizeByWidth, sizeByHeight).toSp()
+            }
+        }
+
+        val hourLineHeight = remember(hourFontSize) {
+            hourFontSize * 0.80f
+        }
+
+        val minuteLineHeight = remember(minuteFontSize) {
+            minuteFontSize * 0.80f
         }
 
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.Center
         ) {
-            // 時 (Hour) - 鮮やかな色 (Cyber Cyan)
+            // 時 (Hour) - 左寄せ、大きめ、Cyan
             Text(
                 text = hourString,
                 style = MaterialTheme.typography.displayLarge.copy(
-                    fontSize = dynamicFontSize,
-                    lineHeight = dynamicLineHeight
+                    fontSize = hourFontSize,
+                    lineHeight = hourLineHeight
                 ),
-                color = Color(0xFF00FFFF),
-                textAlign = TextAlign.Center,
+                color = Color(0xFF00FFFF), // Cyber Cyan
+                textAlign = TextAlign.Start,
                 maxLines = 1,
                 softWrap = false,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // 分 (Minute) - グレー
+            // 分 (Minute) - 右寄せ、やや小さめ、Gray
             Text(
                 text = minuteString,
                 style = MaterialTheme.typography.displayLarge.copy(
-                    fontSize = dynamicFontSize,
-                    lineHeight = dynamicLineHeight
+                    fontSize = minuteFontSize,
+                    lineHeight = minuteLineHeight
                 ),
                 color = Color.Gray,
-                textAlign = TextAlign.Center,
+                textAlign = TextAlign.End,
                 maxLines = 1,
                 softWrap = false,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset(y = (-20).dp)
+                    .offset(y = (-16).dp) // 適度な間隔
             )
         }
     }

@@ -7,9 +7,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.gadgeski.vetro.ui.screens.DeskClockScreen
+import com.gadgeski.vetro.ui.screens.CyberpunkClockScreen
 import com.gadgeski.vetro.ui.theme.VetroTheme
 import dagger.hilt.android.AndroidEntryPoint
+
+// 新しいサイバーパンク画面(import com.gadgeski.vetro.ui.screens.CyberpunkClockScreen)
+// import com.gadgeski.vetro.ui.screens.DeskClockScreen
+// 元の時計画面（戻すときはコメントアウトを解除）
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -28,7 +32,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             VetroTheme {
                 // 作成した時計画面を表示
-                DeskClockScreen()
+
+                // 通常モード（ミニマル）
+                // DeskClockScreen()
+
+                // 実験モード（サイバーパンク）
+                CyberpunkClockScreen()
             }
         }
     }
