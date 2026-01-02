@@ -2,15 +2,12 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.compose.compiler)
-    // 【追加】 Hiltプラグイン (libs経由)
     id("kotlin-kapt")
     alias(libs.plugins.hilt)
 }
 
 android {
     namespace = "com.gadgeski.vetro"
-
-    // 警告に従い 36 (Android 16 プレビュー相当) に設定
     compileSdk = 36
 
     defaultConfig {
@@ -69,15 +66,15 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
-
-    // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    // 【追加】 Hilt (DI) - libs経由
+    // Hilt (DI)
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
+    // 【追加】 これで hiltViewModel() が使えるようになります
+    implementation(libs.androidx.hilt.navigation.compose)
 
-    // 【追加】 WindowManager - libs経由
+    // WindowManager
     implementation(libs.androidx.window)
 
     testImplementation(libs.junit)
