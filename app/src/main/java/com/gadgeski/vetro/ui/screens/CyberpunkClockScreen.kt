@@ -1,6 +1,7 @@
 package com.gadgeski.vetro.ui.screens
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.BlurMaskFilter
 import android.os.BatteryManager
 import androidx.compose.animation.AnimatedContent
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -84,6 +86,10 @@ fun CyberpunkClockScreen(
     val currentTime by viewModel.currentTime.collectAsState()
     val hingePosture by rememberHingePosture()
 
+    // 【追加】 画面の向きを取得 (縦 or 横)
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     // 背景: ディープブラック
     Box(
         modifier = Modifier
@@ -95,14 +101,24 @@ fun CyberpunkClockScreen(
 
         // レイアウト切り替えアニメーション
         AnimatedContent(
-            targetState = hingePosture,
+            // 状態（姿勢 + 向き）をキーにして切り替え
+            targetState = Triple(hingePosture, isLandscape, currentTime),
+            // ※ currentTimeを入れると毎秒アニメーションしてしまうので、レイアウトキーだけにするのが正解ですが、
+            // AnimatedContentのキーとしては Pair(hingePosture, isLandscape) が適切です。
+            // 今回はシンプルに contentKey を指定します。
+            contentKey = { it.first to it.second },
             transitionSpec = { fadeIn(tween(500)) togetherWith fadeOut(tween(500)) },
             label = "LayoutSwitch"
-        ) { posture ->
-            when (posture) {
-                HingePosture.HALF_OPENED -> TabletopMode(currentTime)
-                else -> MonolithMode(currentTime)
-            // FLAT時はこちら
+        ) { (posture, landscape, time) ->
+            if (posture == HingePosture.HALF_OPENED) {
+                // 1. 半開き (L字) -> Tabletop Mode
+                TabletopMode(time)
+            } else if (landscape) {
+                // 2. 全開 & 横向き -> Landscape Mode (New!)
+                LandscapeMode(time)
+            } else {
+                // 3. 全開 & 縦向き -> Monolith Mode
+                MonolithMode(time)
             }
         }
     }
@@ -144,23 +160,9 @@ fun TabletopMode(time: LocalTime) {
 @Composable
 fun MonolithMode(time: LocalTime) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // 【追加】背景中央の縦ライン (光ファイバーケーブル演出)
-        // ここで fillMaxHeight を使用するためインポートを追加しました
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            VerticalDivider(
-                color = HudGray.copy(alpha = 0.3f),
-                thickness = 1.dp,
-                modifier = Modifier.fillMaxHeight()
-            )
-            // コアライン (発光)
-            VerticalDivider(
-                color = NeonCyan.copy(alpha = 0.5f),
-                thickness = 2.dp,
-                modifier = Modifier
-                    .fillMaxHeight(0.8f)
-                    // 全長ではなく少し短くして浮遊感を出す
-                    .alpha(0.5f)
-            )
+            VerticalDivider(color = HudGray.copy(alpha = 0.3f), thickness = 1.dp, modifier = Modifier.fillMaxHeight())
+            VerticalDivider(color = NeonCyan.copy(alpha = 0.5f), thickness = 2.dp, modifier = Modifier.fillMaxHeight(0.8f).alpha(0.5f))
         }
 
         Column(
@@ -170,64 +172,64 @@ fun MonolithMode(time: LocalTime) {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 上段: HH (巨大・Bold・左寄せアシンメトリー)
-            Box(
-                modifier = Modifier.weight(2f).fillMaxWidth(),
-                contentAlignment = Alignment.CenterStart
-            // 左寄せのニュアンス
-            ) {
-                DynamicNeonText(
-                    text = time.format(DateTimeFormatter.ofPattern("HH")),
-                    color = NeonCyan,
-                    scaleFactor = 0.55f,
-                    // 少し大きめに
-                    isBold = true
-                    // Orbitron Bold
-                )
+            Box(modifier = Modifier.weight(2f).fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                DynamicNeonText(time.format(DateTimeFormatter.ofPattern("HH")), NeonCyan, 0.55f, isBold = true)
             }
-
-            // 中央の装飾ラインと交差する水平ライン
             HorizontalDivider(color = HotPink.copy(alpha = 0.5f), thickness = 2.dp, modifier = Modifier.width(50.dp))
-
-            // 中段: MM (巨大・Bold・右寄せアシンメトリー)
-            Box(
-                modifier = Modifier.weight(2f).fillMaxWidth(),
-                contentAlignment = Alignment.CenterEnd
-            // 右寄せのニュアンス
-            ) {
-                DynamicNeonText(
-                    text = time.format(DateTimeFormatter.ofPattern("mm")),
-                    color = NeonCyan,
-                    scaleFactor = 0.55f,
-                    isBold = true // Orbitron Bold
-                )
+            Box(modifier = Modifier.weight(2f).fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                DynamicNeonText(time.format(DateTimeFormatter.ofPattern("mm")), NeonCyan, 0.55f, isBold = true)
             }
-
-            // 下段: 情報パネル + SS (中央)
             Box(modifier = Modifier.weight(1.5f).fillMaxWidth()) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // 秒数 (Medium)
                     Text(
                         text = time.format(DateTimeFormatter.ofPattern("ss")),
                         color = HotPink,
                         fontSize = 40.sp,
                         fontFamily = OrbitronFontFamily,
                         fontWeight = FontWeight.Medium,
-                        // 指示書通り Medium
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(24.dp))
-
-                    // バッテリー情報
                     BatteryStatusRow()
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // ログ
-                    Box(modifier = Modifier.height(100.dp)) {
-                        SystemLogView()
-                    }
+                    Box(modifier = Modifier.height(100.dp)) { SystemLogView() }
                 }
             }
+        }
+    }
+}
+
+// --- Mode C: Landscape Mode (全開/横長) ---
+// 【新規追加】横画面時のレイアウト崩れを防ぐモード
+@Composable
+fun LandscapeMode(time: LocalTime) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // 左側: 時計エリア (画面の60%)
+        Box(
+            modifier = Modifier
+                .weight(0.6f)
+                .fillMaxHeight()
+                .border(1.dp, HudGray.copy(alpha = 0.5f))
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            HorizontalClock(time)
+            // 横並び時計を再利用
+            CornerFrame(Modifier.matchParentSize())
+        }
+
+        // 右側: 情報エリア (画面の40%)
+        Box(
+            modifier = Modifier
+                .weight(0.4f)
+                .fillMaxHeight()
+        ) {
+            DashboardPanel()
         }
     }
 }
@@ -243,32 +245,18 @@ fun HorizontalClock(time: LocalTime) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         BlinkingText(text = "SYSTEM TIME", color = NeonCyan, modifier = Modifier.padding(bottom = 8.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            // 横並び時計 (Bold)
             NeonText(text = hour, fontSize = 70.dp, color = NeonCyan, isBold = true)
             NeonText(text = ":", fontSize = 70.dp, color = NeonCyan, modifier = Modifier.padding(horizontal = 4.dp), isBold = true)
             NeonText(text = minute, fontSize = 70.dp, color = NeonCyan, isBold = true)
         }
-        // 秒数 (Medium)
-        Text(
-            text = "SEC.$second",
-            color = HotPink,
-            fontFamily = OrbitronFontFamily,
-            fontWeight = FontWeight.Medium,
-            fontSize = 16.sp
-        )
+        Text(text = "SEC.$second", color = HotPink, fontFamily = OrbitronFontFamily, fontWeight = FontWeight.Medium, fontSize = 16.sp)
     }
 }
 
 @Composable
 fun DashboardPanel() {
     Column {
-        Text(
-            text = "STATUS MONITOR",
-            color = HudGray,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(bottom = 8.dp),
-            fontFamily = BBHBartleFontFamily
-        )
+        Text(text = "STATUS MONITOR", color = HudGray, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp), fontFamily = BBHBartleFontFamily)
         HorizontalDivider(color = HudGray)
         Spacer(modifier = Modifier.height(8.dp))
         BatteryStatusRow()
@@ -283,24 +271,14 @@ fun BatteryStatusRow() {
     val batteryLevel = remember { getBatteryLevel(context) }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = "PWR",
-            color = NeonCyan,
-            modifier = Modifier.width(40.dp),
-            fontFamily = BBHBartleFontFamily
-        )
+        Text(text = "PWR", color = NeonCyan, modifier = Modifier.width(40.dp), fontFamily = BBHBartleFontFamily)
         LinearProgressIndicator(
             progress = { batteryLevel / 100f },
             modifier = Modifier.weight(1f).height(8.dp),
             color = if (batteryLevel > 20) NeonCyan else HotPink,
             trackColor = HudGray
         )
-        Text(
-            text = "${batteryLevel}%",
-            color = NeonCyan,
-            modifier = Modifier.padding(start = 8.dp),
-            fontFamily = BBHBartleFontFamily
-        )
+        Text(text = "${batteryLevel}%", color = NeonCyan, modifier = Modifier.padding(start = 8.dp), fontFamily = BBHBartleFontFamily)
     }
 }
 
@@ -322,27 +300,15 @@ fun SystemLogView() {
 
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
         items(logs) { log ->
-            Text(
-                text = log,
-                color = NeonCyan.copy(alpha = 0.5f),
-                fontSize = 12.sp,
-                fontFamily = BBHBartleFontFamily
-            )
+            Text(text = log, color = NeonCyan.copy(alpha = 0.5f), fontSize = 12.sp, fontFamily = BBHBartleFontFamily)
         }
     }
 }
 
 // --- Visual Effects ---
 
-// 固定サイズ指定用
 @Composable
-fun NeonText(
-    text: String,
-    fontSize: Dp,
-    color: Color,
-    modifier: Modifier = Modifier,
-    isBold: Boolean = false
-) {
+fun NeonText(text: String, fontSize: Dp, color: Color, modifier: Modifier = Modifier, isBold: Boolean = false) {
     val context = LocalContext.current
     val density = LocalDensity.current
 
@@ -355,9 +321,7 @@ fun NeonText(
         Paint().asFrameworkPaint().apply {
             isAntiAlias = true
             maskFilter = BlurMaskFilter(20f, BlurMaskFilter.Blur.NORMAL)
-            if (typeface != null) {
-                this.typeface = typeface
-            }
+            if (typeface != null) { this.typeface = typeface }
         }
     }
     val textSizePx = with(density) { fontSize.toPx() }
@@ -381,17 +345,9 @@ fun NeonText(
     }
 }
 
-// 動的サイズ指定用 (Monolith Mode用)
 @Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
 @Composable
-fun DynamicNeonText(
-    text: String,
-    color: Color,
-    scaleFactor: Float,
-    modifier: Modifier = Modifier,
-    // Modifierをオプショナル引数の先頭に移動
-    isBold: Boolean = false
-) {
+fun DynamicNeonText(text: String, color: Color, scaleFactor: Float, modifier: Modifier = Modifier, isBold: Boolean = false) {
     val context = LocalContext.current
     val density = LocalDensity.current
 
@@ -404,20 +360,14 @@ fun DynamicNeonText(
         Paint().asFrameworkPaint().apply {
             isAntiAlias = true
             maskFilter = BlurMaskFilter(30f, BlurMaskFilter.Blur.NORMAL)
-            if (typeface != null) {
-                this.typeface = typeface
-            }
+            if (typeface != null) { this.typeface = typeface }
         }
     }
 
     BoxWithConstraints(modifier = modifier) {
         val constraintsWidth = constraints.maxWidth
-        val dynamicFontSize = remember(constraintsWidth, density) {
-            with(density) { (constraintsWidth * scaleFactor).toSp() }
-        }
-        val dynamicFontSizePx = remember(dynamicFontSize, density) {
-            with(density) { dynamicFontSize.toPx() }
-        }
+        val dynamicFontSize = remember(constraintsWidth, density) { with(density) { (constraintsWidth * scaleFactor).toSp() } }
+        val dynamicFontSizePx = remember(dynamicFontSize, density) { with(density) { dynamicFontSize.toPx() } }
 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Canvas(modifier = Modifier.fillMaxWidth().height(with(density){ dynamicFontSize.toDp() * 1.2f })) {
@@ -446,12 +396,8 @@ fun DynamicNeonText(
 fun CyberpunkBackground() {
     val infiniteTransition = rememberInfiniteTransition(label = "scanline")
     val scanlineY by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(animation = tween(3000, easing = LinearEasing), repeatMode = RepeatMode.Restart),
         label = "scanlineY"
     )
 
@@ -459,14 +405,12 @@ fun CyberpunkBackground() {
         val gridSize = 50.dp.toPx()
         val width = size.width
         val height = size.height
-
         for (x in 0..width.toInt() step gridSize.toInt()) {
             drawLine(color = HudGray, start = Offset(x.toFloat(), 0f), end = Offset(x.toFloat(), height), strokeWidth = 1f, alpha = 0.2f)
         }
         for (y in 0..height.toInt() step gridSize.toInt()) {
             drawLine(color = HudGray, start = Offset(0f, y.toFloat()), end = Offset(width, y.toFloat()), strokeWidth = 1f, alpha = 0.2f)
         }
-
         val lineHeight = height * 0.1f
         val yPos = height * scanlineY
         drawRect(
@@ -488,13 +432,7 @@ fun BlinkingText(text: String, color: Color, modifier: Modifier = Modifier) {
         animationSpec = infiniteRepeatable(animation = tween(800, easing = LinearEasing), repeatMode = RepeatMode.Reverse),
         label = "alpha"
     )
-    Text(
-        text = text,
-        color = color.copy(alpha = alpha),
-        modifier = modifier,
-        letterSpacing = 2.sp,
-        fontFamily = BBHBartleFontFamily
-    )
+    Text(text = text, color = color.copy(alpha = alpha), modifier = modifier, letterSpacing = 2.sp, fontFamily = BBHBartleFontFamily)
 }
 
 @Composable
@@ -502,7 +440,6 @@ fun CornerFrame(modifier: Modifier) {
     val color = NeonCyan.copy(alpha = 0.5f)
     val length = 20.dp
     val thickness = 2.dp
-
     Canvas(modifier = modifier) {
         drawLine(color, Offset(0f, 0f), Offset(length.toPx(), 0f), thickness.toPx())
         drawLine(color, Offset(0f, 0f), Offset(0f, length.toPx()), thickness.toPx())
@@ -517,21 +454,11 @@ fun CornerFrame(modifier: Modifier) {
 
 @Composable
 fun HingeSpacer() {
-    Box(
-        modifier = Modifier.fillMaxWidth().height(24.dp).background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "--- FOLD AXIS ---",
-            color = HudGray,
-            fontSize = 10.sp,
-            letterSpacing = 4.sp,
-            fontFamily = BBHBartleFontFamily
-        )
+    Box(modifier = Modifier.fillMaxWidth().height(24.dp).background(Color.Black), contentAlignment = Alignment.Center) {
+        Text(text = "--- FOLD AXIS ---", color = HudGray, fontSize = 10.sp, letterSpacing = 4.sp, fontFamily = BBHBartleFontFamily)
     }
 }
 
-// バッテリー取得Util
 fun getBatteryLevel(context: Context): Int {
     val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
     return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
