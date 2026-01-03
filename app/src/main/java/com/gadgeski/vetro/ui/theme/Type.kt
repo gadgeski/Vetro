@@ -9,19 +9,23 @@ import androidx.compose.ui.unit.sp
 import com.gadgeski.vetro.R
 
 // 1. カスタムフォントファミリーの定義 (BBH Bartle)
-// ※ R.font.bbh_bartle が未解決になる場合、app/src/main/res/font/ に bbh_bartle.ttf を配置してください
 val BBHBartleFontFamily = FontFamily(
     Font(R.font.bbh_bartle, FontWeight.Normal)
 )
 
+// 【追加】 Orbitron Font Family (Cyberpunk用)
+// ※ app/src/main/res/font/ に orbitron_bold.ttf と orbitron_medium.ttf を配置してください
+val OrbitronFontFamily = FontFamily(
+    Font(R.font.orbitron_bold, FontWeight.Bold),
+    Font(R.font.orbitron_medium, FontWeight.Medium)
+)
+
 // 2. タイポグラフィの設定
 val Typography = Typography(
-    // 時計の「時」「分」表示用 (Display Large)
-    // 画面いっぱいに表示するため、非常に大きなサイズを定義します
+    // 時計の「時」「分」表示用 (Display Large) - BBH Bartle (通常モード用)
     displayLarge = TextStyle(
         fontFamily = BBHBartleFontFamily,
         fontWeight = FontWeight.Normal,
-        // ここでのサイズは基準値です。実際のUIでは画面幅に合わせてスケーリングします
         fontSize = 120.sp,
         lineHeight = 120.sp,
         letterSpacing = (-2).sp
@@ -34,8 +38,4 @@ val Typography = Typography(
         lineHeight = 52.sp,
         letterSpacing = 0.sp
     )
-
-    /* * その他のスタイル（bodyLargeなど）はデフォルトのままにします。
-     * 設定画面などは標準フォントの方が読みやすいためです。
-     */
 )

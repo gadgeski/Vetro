@@ -3,20 +3,26 @@ package com.gadgeski.vetro.ui.screens
 import android.content.Context
 import android.graphics.BlurMaskFilter
 import android.os.BatteryManager
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,8 +33,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,10 +54,15 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.res.ResourcesCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.gadgeski.vetro.R
+import com.gadgeski.vetro.ui.theme.BBHBartleFontFamily
+import com.gadgeski.vetro.ui.theme.OrbitronFontFamily
 import com.gadgeski.vetro.ui.viewmodel.ClockViewModel
 import com.gadgeski.vetro.util.HingePosture
 import com.gadgeski.vetro.util.rememberHingePosture
@@ -79,99 +90,172 @@ fun CyberpunkClockScreen(
             .fillMaxSize()
             .background(DeepBlack)
     ) {
-        // 背景エフェクト: グリッドとスキャンライン
+        // 共通背景エフェクト
         CyberpunkBackground()
 
-        Column(modifier = Modifier.fillMaxSize()) {
-            // --- 上部セクション (時計) ---
-            // 半開き時はここがメイン表示になる
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .border(1.dp, HudGray.copy(alpha = 0.5f))
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CockpitClock(currentTime)
-
-                // 装飾: 四隅のコーナーフレーム
-                CornerFrame(Modifier.matchParentSize())
-            }
-
-            // --- ヒンジエリア (折り目) ---
-            // 半開き時はスペーサーとして機能
-            if (hingePosture == HingePosture.HALF_OPENED) {
-                HingeSpacer()
-            }
-
-            // --- 下部セクション (ダッシュボード) ---
-            // 半開き時は机に接地する部分
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                DashboardPanel()
+        // レイアウト切り替えアニメーション
+        AnimatedContent(
+            targetState = hingePosture,
+            transitionSpec = { fadeIn(tween(500)) togetherWith fadeOut(tween(500)) },
+            label = "LayoutSwitch"
+        ) { posture ->
+            when (posture) {
+                HingePosture.HALF_OPENED -> TabletopMode(currentTime)
+                else -> MonolithMode(currentTime)
+            // FLAT時はこちら
             }
         }
     }
 }
 
+// --- Mode A: Tabletop Mode (半開き) ---
 @Composable
-fun CockpitClock(time: LocalTime) {
+fun TabletopMode(time: LocalTime) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        // 上部: 時計エリア
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .border(1.dp, HudGray.copy(alpha = 0.5f))
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            HorizontalClock(time)
+            CornerFrame(Modifier.matchParentSize())
+        }
+
+        // ヒンジエリア
+        HingeSpacer()
+
+        // 下部: 情報エリア
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            DashboardPanel()
+        }
+    }
+}
+
+// --- Mode B: Monolith Mode (全開/縦長) ---
+@Composable
+fun MonolithMode(time: LocalTime) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 【追加】背景中央の縦ライン (光ファイバーケーブル演出)
+        // ここで fillMaxHeight を使用するためインポートを追加しました
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            VerticalDivider(
+                color = HudGray.copy(alpha = 0.3f),
+                thickness = 1.dp,
+                modifier = Modifier.fillMaxHeight()
+            )
+            // コアライン (発光)
+            VerticalDivider(
+                color = NeonCyan.copy(alpha = 0.5f),
+                thickness = 2.dp,
+                modifier = Modifier
+                    .fillMaxHeight(0.8f)
+                    // 全長ではなく少し短くして浮遊感を出す
+                    .alpha(0.5f)
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 48.dp, horizontal = 16.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 上段: HH (巨大・Bold・左寄せアシンメトリー)
+            Box(
+                modifier = Modifier.weight(2f).fillMaxWidth(),
+                contentAlignment = Alignment.CenterStart
+            // 左寄せのニュアンス
+            ) {
+                DynamicNeonText(
+                    text = time.format(DateTimeFormatter.ofPattern("HH")),
+                    color = NeonCyan,
+                    scaleFactor = 0.55f,
+                    // 少し大きめに
+                    isBold = true
+                    // Orbitron Bold
+                )
+            }
+
+            // 中央の装飾ラインと交差する水平ライン
+            HorizontalDivider(color = HotPink.copy(alpha = 0.5f), thickness = 2.dp, modifier = Modifier.width(50.dp))
+
+            // 中段: MM (巨大・Bold・右寄せアシンメトリー)
+            Box(
+                modifier = Modifier.weight(2f).fillMaxWidth(),
+                contentAlignment = Alignment.CenterEnd
+            // 右寄せのニュアンス
+            ) {
+                DynamicNeonText(
+                    text = time.format(DateTimeFormatter.ofPattern("mm")),
+                    color = NeonCyan,
+                    scaleFactor = 0.55f,
+                    isBold = true // Orbitron Bold
+                )
+            }
+
+            // 下段: 情報パネル + SS (中央)
+            Box(modifier = Modifier.weight(1.5f).fillMaxWidth()) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // 秒数 (Medium)
+                    Text(
+                        text = time.format(DateTimeFormatter.ofPattern("ss")),
+                        color = HotPink,
+                        fontSize = 40.sp,
+                        fontFamily = OrbitronFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        // 指示書通り Medium
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // バッテリー情報
+                    BatteryStatusRow()
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // ログ
+                    Box(modifier = Modifier.height(100.dp)) {
+                        SystemLogView()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// --- Components ---
+
+@Composable
+fun HorizontalClock(time: LocalTime) {
     val hour = time.format(DateTimeFormatter.ofPattern("HH"))
     val minute = time.format(DateTimeFormatter.ofPattern("mm"))
     val second = time.format(DateTimeFormatter.ofPattern("ss"))
-    val date = java.time.LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"))
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        // SYSTEM TIME ラベル (点滅)
-        BlinkingText(
-            text = "SYSTEM TIME",
-            color = NeonCyan,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        // メイン時計 (ネオン発光)
+        BlinkingText(text = "SYSTEM TIME", color = NeonCyan, modifier = Modifier.padding(bottom = 8.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            NeonText(
-                text = hour,
-                fontSize = 80.dp, // 固定サイズで一旦実装
-                color = NeonCyan
-            )
-            NeonText(
-                text = ":",
-                fontSize = 80.dp,
-                color = NeonCyan,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
-            NeonText(
-                text = minute,
-                fontSize = 80.dp,
-                color = NeonCyan
-            )
+            // 横並び時計 (Bold)
+            NeonText(text = hour, fontSize = 70.dp, color = NeonCyan, isBold = true)
+            NeonText(text = ":", fontSize = 70.dp, color = NeonCyan, modifier = Modifier.padding(horizontal = 4.dp), isBold = true)
+            NeonText(text = minute, fontSize = 70.dp, color = NeonCyan, isBold = true)
         }
-
-        // 日付と秒
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = date,
-                color = NeonCyan.copy(alpha = 0.7f),
-                style = MaterialTheme.typography.bodyMedium,
-                fontFamily = MaterialTheme.typography.displayLarge.fontFamily // BBH Bartle流用
-            )
-            Text(
-                text = "SEC.$second",
-                color = HotPink,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        // 秒数 (Medium)
+        Text(
+            text = "SEC.$second",
+            color = HotPink,
+            fontFamily = OrbitronFontFamily,
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.sp
+        )
     }
 }
 
@@ -182,18 +266,13 @@ fun DashboardPanel() {
             text = "STATUS MONITOR",
             color = HudGray,
             fontSize = 12.sp,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
+            fontFamily = BBHBartleFontFamily
         )
-
         HorizontalDivider(color = HudGray)
         Spacer(modifier = Modifier.height(8.dp))
-
-        // バッテリー情報
         BatteryStatusRow()
-
         Spacer(modifier = Modifier.height(16.dp))
-
-        // システムログ (流れるテキスト)
         SystemLogView()
     }
 }
@@ -204,19 +283,23 @@ fun BatteryStatusRow() {
     val batteryLevel = remember { getBatteryLevel(context) }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = "PWR", color = NeonCyan, modifier = Modifier.width(40.dp))
+        Text(
+            text = "PWR",
+            color = NeonCyan,
+            modifier = Modifier.width(40.dp),
+            fontFamily = BBHBartleFontFamily
+        )
         LinearProgressIndicator(
             progress = { batteryLevel / 100f },
-            modifier = Modifier
-                .weight(1f)
-                .height(8.dp),
+            modifier = Modifier.weight(1f).height(8.dp),
             color = if (batteryLevel > 20) NeonCyan else HotPink,
             trackColor = HudGray
         )
         Text(
             text = "${batteryLevel}%",
             color = NeonCyan,
-            modifier = Modifier.padding(start = 8.dp)
+            modifier = Modifier.padding(start = 8.dp),
+            fontFamily = BBHBartleFontFamily
         )
     }
 }
@@ -226,11 +309,10 @@ fun SystemLogView() {
     val logs = remember { mutableStateListOf<String>() }
     val listState = rememberLazyListState()
 
-    // ダミーログ生成
     LaunchedEffect(Unit) {
         while (true) {
             val hex = Random.nextInt(0, 999999).toString(16).uppercase().padStart(6, '0')
-            val msg = listOf("SYNC...", "CHECKING...", "OK", "DATA FLOW", "PING").random()
+            val msg = listOf("SYNC...", "CHECKING...", "OK", "DATA FLOW", "PING", "VETRO SYS").random()
             logs.add("[$hex] :: $msg")
             if (logs.size > 20) logs.removeAt(0)
             listState.animateScrollToItem(logs.size - 1)
@@ -238,16 +320,13 @@ fun SystemLogView() {
         }
     }
 
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize()
-    ) {
+    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
         items(logs) { log ->
             Text(
                 text = log,
                 color = NeonCyan.copy(alpha = 0.5f),
-                fontSize = 10.sp,
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                fontSize = 12.sp,
+                fontFamily = BBHBartleFontFamily
             )
         }
     }
@@ -255,37 +334,111 @@ fun SystemLogView() {
 
 // --- Visual Effects ---
 
+// 固定サイズ指定用
 @Composable
-fun NeonText(text: String, fontSize: Dp, color: Color, modifier: Modifier = Modifier) {
-    val paint = remember {
+fun NeonText(
+    text: String,
+    fontSize: Dp,
+    color: Color,
+    modifier: Modifier = Modifier,
+    isBold: Boolean = false
+) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    val typeface = remember(isBold) {
+        val fontRes = if (isBold) R.font.orbitron_bold else R.font.orbitron_medium
+        try { ResourcesCompat.getFont(context, fontRes) } catch (_: Exception) { null }
+    }
+
+    val paint = remember(typeface) {
         Paint().asFrameworkPaint().apply {
             isAntiAlias = true
-            // ネオンの光彩 (Glow)
             maskFilter = BlurMaskFilter(20f, BlurMaskFilter.Blur.NORMAL)
+            if (typeface != null) {
+                this.typeface = typeface
+            }
         }
     }
-    val density = LocalDensity.current
     val textSizePx = with(density) { fontSize.toPx() }
 
     Box(modifier = modifier) {
-        // 背面の光彩
         Canvas(modifier = Modifier.matchParentSize()) {
             drawIntoCanvas {
                 paint.color = color.toArgb()
                 paint.textSize = textSizePx
-                // 中央配置のための簡易計算（厳密ではないが雰囲気重視）
-                // 【修正】 nativeCanvas にアクセスするために必要なインポートを追加しました
                 it.nativeCanvas.drawText(text, 0f, size.height * 0.8f, paint)
             }
         }
-        // 前面のくっきりした文字
         Text(
             text = text,
             fontSize = with(density) { fontSize.toSp() },
-            color = Color.White, // 中心は白く光る
-            style = MaterialTheme.typography.displayLarge,
+            color = Color.White,
+            fontFamily = OrbitronFontFamily,
+            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium,
             modifier = Modifier.alpha(0.9f)
         )
+    }
+}
+
+// 動的サイズ指定用 (Monolith Mode用)
+@Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
+@Composable
+fun DynamicNeonText(
+    text: String,
+    color: Color,
+    scaleFactor: Float,
+    modifier: Modifier = Modifier,
+    // Modifierをオプショナル引数の先頭に移動
+    isBold: Boolean = false
+) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    val typeface = remember(isBold) {
+        val fontRes = if (isBold) R.font.orbitron_bold else R.font.orbitron_medium
+        try { ResourcesCompat.getFont(context, fontRes) } catch (_: Exception) { null }
+    }
+
+    val paint = remember(typeface) {
+        Paint().asFrameworkPaint().apply {
+            isAntiAlias = true
+            maskFilter = BlurMaskFilter(30f, BlurMaskFilter.Blur.NORMAL)
+            if (typeface != null) {
+                this.typeface = typeface
+            }
+        }
+    }
+
+    BoxWithConstraints(modifier = modifier) {
+        val constraintsWidth = constraints.maxWidth
+        val dynamicFontSize = remember(constraintsWidth, density) {
+            with(density) { (constraintsWidth * scaleFactor).toSp() }
+        }
+        val dynamicFontSizePx = remember(dynamicFontSize, density) {
+            with(density) { dynamicFontSize.toPx() }
+        }
+
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.fillMaxWidth().height(with(density){ dynamicFontSize.toDp() * 1.2f })) {
+                drawIntoCanvas {
+                    paint.color = color.toArgb()
+                    paint.textSize = dynamicFontSizePx
+                    val textWidth = paint.measureText(text)
+                    val x = (size.width - textWidth) / 2
+                    it.nativeCanvas.drawText(text, x, size.height * 0.75f, paint)
+                }
+            }
+            Text(
+                text = text,
+                fontSize = dynamicFontSize,
+                color = Color.White,
+                fontFamily = OrbitronFontFamily,
+                fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium,
+                modifier = Modifier.alpha(0.9f),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
@@ -303,38 +456,23 @@ fun CyberpunkBackground() {
     )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
-        // 1. 薄いグリッド
         val gridSize = 50.dp.toPx()
         val width = size.width
         val height = size.height
 
         for (x in 0..width.toInt() step gridSize.toInt()) {
-            drawLine(
-                color = HudGray,
-                start = Offset(x.toFloat(), 0f),
-                end = Offset(x.toFloat(), height),
-                strokeWidth = 1f,
-                alpha = 0.2f
-            )
+            drawLine(color = HudGray, start = Offset(x.toFloat(), 0f), end = Offset(x.toFloat(), height), strokeWidth = 1f, alpha = 0.2f)
         }
         for (y in 0..height.toInt() step gridSize.toInt()) {
-            drawLine(
-                color = HudGray,
-                start = Offset(0f, y.toFloat()),
-                end = Offset(width, y.toFloat()),
-                strokeWidth = 1f,
-                alpha = 0.2f
-            )
+            drawLine(color = HudGray, start = Offset(0f, y.toFloat()), end = Offset(width, y.toFloat()), strokeWidth = 1f, alpha = 0.2f)
         }
 
-        // 2. スキャンライン
         val lineHeight = height * 0.1f
         val yPos = height * scanlineY
         drawRect(
             brush = Brush.verticalGradient(
                 colors = listOf(Color.Transparent, NeonCyan.copy(alpha = 0.1f), Color.Transparent),
-                startY = yPos,
-                endY = yPos + lineHeight
+                startY = yPos, endY = yPos + lineHeight
             ),
             topLeft = Offset(0f, yPos),
             size = size.copy(height = lineHeight)
@@ -346,15 +484,17 @@ fun CyberpunkBackground() {
 fun BlinkingText(text: String, color: Color, modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "blink")
     val alpha by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
+        initialValue = 1f, targetValue = 0.2f,
+        animationSpec = infiniteRepeatable(animation = tween(800, easing = LinearEasing), repeatMode = RepeatMode.Reverse),
         label = "alpha"
     )
-    Text(text = text, color = color.copy(alpha = alpha), modifier = modifier, letterSpacing = 2.sp)
+    Text(
+        text = text,
+        color = color.copy(alpha = alpha),
+        modifier = modifier,
+        letterSpacing = 2.sp,
+        fontFamily = BBHBartleFontFamily
+    )
 }
 
 @Composable
@@ -364,16 +504,12 @@ fun CornerFrame(modifier: Modifier) {
     val thickness = 2.dp
 
     Canvas(modifier = modifier) {
-        // 左上
         drawLine(color, Offset(0f, 0f), Offset(length.toPx(), 0f), thickness.toPx())
         drawLine(color, Offset(0f, 0f), Offset(0f, length.toPx()), thickness.toPx())
-        // 右上
         drawLine(color, Offset(size.width, 0f), Offset(size.width - length.toPx(), 0f), thickness.toPx())
         drawLine(color, Offset(size.width, 0f), Offset(size.width, length.toPx()), thickness.toPx())
-        // 左下
         drawLine(color, Offset(0f, size.height), Offset(length.toPx(), size.height), thickness.toPx())
         drawLine(color, Offset(0f, size.height), Offset(0f, size.height - length.toPx()), thickness.toPx())
-        // 右下
         drawLine(color, Offset(size.width, size.height), Offset(size.width - length.toPx(), size.height), thickness.toPx())
         drawLine(color, Offset(size.width, size.height), Offset(size.width, size.height - length.toPx()), thickness.toPx())
     }
@@ -382,23 +518,18 @@ fun CornerFrame(modifier: Modifier) {
 @Composable
 fun HingeSpacer() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(24.dp) // ヒンジ部分の高さ
-            .background(Color.Black),
+        modifier = Modifier.fillMaxWidth().height(24.dp).background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "--- FOLD AXIS ---",
             color = HudGray,
             fontSize = 10.sp,
-            letterSpacing = 4.sp
+            letterSpacing = 4.sp,
+            fontFamily = BBHBartleFontFamily
         )
     }
 }
-
-// 【削除】 独自のModifier.width拡張関数は削除しました。
-// 標準ライブラリの androidx.compose.foundation.layout.width を使用します。
 
 // バッテリー取得Util
 fun getBatteryLevel(context: Context): Int {
