@@ -12,7 +12,7 @@ _"Time is not linear. It folds."_
 <sub>cyberpunk(縦)</sub>
 </td>
 <td align="center">
-<img src="docs/img/vetro-cyberpunk_2.png.png" alt="折りたたみ時" width="300">
+<img src="docs/img/vetro-cyberpunk_2.png" alt="折りたたみ時" width="300">
 <br>
 <sub>cyberpunk(折りたたみ)</sub>
 </td>
