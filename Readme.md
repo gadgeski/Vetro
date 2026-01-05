@@ -17,7 +17,7 @@ _"Time is not linear. It folds."_
 <sub>cyberpunk(折りたたみ)</sub>
 </td>
 <td align="center">
-<img src="docs/img/vetro-minimal.png" alt="minimal" width="300">
+<img src="docs/img/vetro-minimal.png" alt="minimal" height="530">
 <br>
 <sub>minimal(横)</sub>
 </td>
