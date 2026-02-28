@@ -103,9 +103,7 @@ fun CyberpunkClockScreen(
         AnimatedContent(
             // 状態（姿勢 + 向き）をキーにして切り替え
             targetState = Triple(hingePosture, isLandscape, currentTime),
-            // ※ currentTimeを入れると毎秒アニメーションしてしまうので、レイアウトキーだけにするのが正解ですが、
-            // AnimatedContentのキーとしては Pair(hingePosture, isLandscape) が適切です。
-            // 今回はシンプルに contentKey を指定します。
+            // ※ currentTimeを入れると毎秒アニメーションしてしまうので、今回はシンプルに contentKey を指定します。
             contentKey = { it.first to it.second },
             transitionSpec = { fadeIn(tween(500)) togetherWith fadeOut(tween(500)) },
             label = "LayoutSwitch"
