@@ -3,17 +3,6 @@ Vetro/
 ├── Readme.md
 ├── STRUCTURE.md
 ├── app
-│   ├── archive_src
-│   │   └── widget_prototype
-│   │       ├── util
-│   │       │   └── WallpaperUtil.kt
-│   │       ├── vetro_widget_info.xml
-│   │       └── widget
-│   │           ├── ChangeWallpaperAction.kt
-│   │           ├── VetroWidget.kt
-│   │           ├── VetroWidgetReceiver.kt
-│   │           ├── VetroWidgetRenderer.kt
-│   │           └── VetroWidgetWorker.kt
 │   ├── build.gradle.kts
 │   ├── proguard-rules.pro
 │   └── src
@@ -35,8 +24,6 @@ Vetro/
 │       │   │               ├── data
 │       │   │               │   ├── ClockMode.kt
 │       │   │               │   └── UserPreferencesRepository.kt
-│       │   │               ├── service
-│       │   │               │   └── VetroDreamService.kt
 │       │   │               ├── ui
 │       │   │               │   ├── components
 │       │   │               │   │   ├── BigTimeDisplay.kt
@@ -55,8 +42,6 @@ Vetro/
 │       │   │                   └── HingeSensor.kt
 │       │   └── res
 │       │       ├── drawable
-│       │       │   ├── background_img.png
-│       │       │   ├── background_img_2.png
 │       │       │   ├── ic_launcher_background.xml
 │       │       │   └── ic_launcher_foreground.xml
 │       │       ├── font
@@ -101,6 +86,24 @@ Vetro/
 │                       └── vetro
 │                           └── ExampleUnitTest.kt
 ├── build.gradle.kts
+├── docs
+│   ├── archive_src
+│   │   ├── service
+│   │   │   └── VetroDreamService.kt
+│   │   └── widget_prototype
+│   │       ├── util
+│   │       │   └── WallpaperUtil.kt
+│   │       ├── vetro_widget_info.xml
+│   │       └── widget
+│   │           ├── ChangeWallpaperAction.kt
+│   │           ├── VetroWidget.kt
+│   │           ├── VetroWidgetReceiver.kt
+│   │           ├── VetroWidgetRenderer.kt
+│   │           └── VetroWidgetWorker.kt
+│   └── img
+│       ├── vetro-cyberpunk_1.png
+│       ├── vetro-cyberpunk_2.png
+│       └── vetro-minimal.png
 ├── gradle
 │   ├── libs.versions.toml
 │   └── wrapper
@@ -112,5 +115,5 @@ Vetro/
 ├── local.properties
 └── settings.gradle.kts
 
-44 directories, 68 files
+46 directories, 69 files
 ```
